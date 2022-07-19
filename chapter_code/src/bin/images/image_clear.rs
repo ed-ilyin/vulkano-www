@@ -13,16 +13,20 @@
 
 use image::{ImageBuffer, Rgba};
 use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer};
-use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage};
+use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage, ClearColorImageInfo, CopyImageToBufferInfo};
 use vulkano::device::{physical::PhysicalDevice, Device, DeviceCreateInfo, QueueCreateInfo};
-use vulkano::format::{ClearValue, Format};
+use vulkano::format::{Format, ClearColorValue};
 use vulkano::image::{ImageDimensions, StorageImage};
 use vulkano::instance::{Instance, InstanceCreateInfo};
 use vulkano::sync;
 use vulkano::sync::GpuFuture;
 
 pub fn main() {
-    let instance = Instance::new(InstanceCreateInfo::default()).expect("failed to create instance");
+    let instance =
+        Instance::new(InstanceCreateInfo {
+            enumerate_portability: true,
+            ..Default::default()
+        }).expect("failed to create instance");
 
     let physical = PhysicalDevice::enumerate(&instance)
         .next()
@@ -72,9 +76,13 @@ pub fn main() {
     )
     .unwrap();
     builder
-        .clear_color_image(image.clone(), ClearValue::Float([0.0, 0.0, 1.0, 1.0]))
+        .clear_color_image(ClearColorImageInfo {
+            clear_value: ClearColorValue::Float([0.0, 0.0, 1.0, 1.0]),
+            ..ClearColorImageInfo::image(image.clone())
+        })
         .unwrap()
-        .copy_image_to_buffer(image.clone(), buf.clone())
+        .copy_image_to_buffer
+            (CopyImageToBufferInfo::image_buffer(image.clone(), buf.clone()))
         .unwrap();
     let command_buffer = builder.build().unwrap();
 

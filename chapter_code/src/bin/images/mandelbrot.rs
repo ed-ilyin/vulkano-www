@@ -15,6 +15,7 @@
 use image::ImageBuffer;
 use image::Rgba;
 use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer};
+use vulkano::command_buffer::CopyImageToBufferInfo;
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage};
 use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
 use vulkano::device::{physical::PhysicalDevice, Device, DeviceCreateInfo, QueueCreateInfo};
@@ -25,7 +26,10 @@ use vulkano::pipeline::{ComputePipeline, Pipeline, PipelineBindPoint};
 use vulkano::sync::{self, GpuFuture};
 
 pub fn main() {
-    let instance = Instance::new(InstanceCreateInfo::default()).expect("failed to create instance");
+    let instance = Instance::new(InstanceCreateInfo {
+        enumerate_portability: true,
+        ..Default::default()
+    }).expect("failed to create instance");
 
     let physical = PhysicalDevice::enumerate(&instance)
         .next()
@@ -136,7 +140,8 @@ void main() {
         )
         .dispatch([1024 / 8, 1024 / 8, 1])
         .unwrap()
-        .copy_image_to_buffer(image.clone(), buf.clone())
+        .copy_image_to_buffer
+            (CopyImageToBufferInfo::image_buffer(image.clone(), buf.clone()))
         .unwrap();
 
     let command_buffer = builder.build().unwrap();
